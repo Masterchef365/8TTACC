@@ -5,9 +5,11 @@ use nom::bytes::complete::*;
 use nom::character::complete::*;
 use nom::character::*;
 use nom::combinator::*;
+use nom::error::ErrorKind;
 use nom::multi::*;
 use nom::sequence::*;
 use nom::IResult;
+use nom::{AsChar, InputTakeAtPosition};
 
 pub type PortName<'s> = Vec<&'s str>;
 
@@ -25,8 +27,12 @@ pub enum Statement<'a> {
     Operation(Operation<'a>),
 }
 
+fn parse_name<'a>(s: &'a str) -> IResult<&'a str, &'a str> {
+    s.split_at_position1_complete(|item| !item.is_alphanum() && item != '_', ErrorKind::NoneOf)
+}
+
 fn parse_portname<'a>(s: &'a str) -> IResult<&'a str, PortName<'a>> {
-    separated_list1(tag("."), alphanumeric1)(s)
+    separated_list1(tag("."), parse_name)(s)
 }
 
 fn parse_operation<'a>(s: &'a str) -> IResult<&'a str, Operation<'a>> {
@@ -36,7 +42,7 @@ fn parse_operation<'a>(s: &'a str) -> IResult<&'a str, Operation<'a>> {
 }
 
 fn parse_label<'a>(s: &'a str) -> IResult<&'a str, Label<'a>> {
-    terminated(alphanumeric1, tag(":"))(s)
+    terminated(parse_name, tag(":"))(s)
 }
 
 fn parse_statement<'a>(s: &'a str) -> IResult<&'a str, Statement<'a>> {
@@ -126,8 +132,8 @@ fn test_parse_line() {
         ))
     );
     assert_eq!(
-        parse_line("thisisalabel:"),
-        Ok(("", Some(Statement::Label("thisisalabel"))))
+        parse_line("this_is_a_label:"),
+        Ok(("", Some(Statement::Label("this_is_a_label"))))
     );
     assert_eq!(parse_line("//"), Ok(("", None)));
     assert_eq!(

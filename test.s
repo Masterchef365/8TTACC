@@ -1,5 +1,5 @@
 OwO -> UwU
 
-label:
-bad.parser -> parser
+label_with_underscores:
+bad.parser_lol -> parser
 parser -> good.parser
