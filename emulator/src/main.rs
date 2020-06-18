@@ -12,6 +12,7 @@ fn main() -> Result<()> {
         None => bail!("Usage: <file_name.s>"),
     };
     let text_segment = fs::read(path)?;
+    Ok(())
 }
 
 struct InternalState {}

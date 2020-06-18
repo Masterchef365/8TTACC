@@ -44,9 +44,11 @@ impl<'a> InstructionDecoder<'a> {
     }
 }
 
+/*
 impl Iterator for InstructionDecoder<'_> {
     type Item = Result<Operation>;
     fn next(&mut self) -> Option<Self::Item> {
 
     }
 }
+*/
