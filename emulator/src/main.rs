@@ -2,6 +2,8 @@ use anyhow::{Result, bail};
 use std::fs;
 use std::io::{BufReader, BufRead, Read};
 use common::*;
+mod decoder;
+use decoder::*;
 
 fn main() -> Result<()> {
     let mut args = std::env::args().skip(1);
