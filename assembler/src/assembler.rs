@@ -94,7 +94,7 @@ pub fn assemble(lines: &[(Statement, usize)]) -> Result<Vec<u8>, AssemblerError>
         match op.src {
             Source::Operand(op) => bytecode.push(op),
             Source::LabelHi(ref label) => bytecode.push((get_label_pc(label)? >> 8) as u8),
-            Source::LabelLo(ref label) => bytecode.push((get_label_pc(label)? & 0x0F) as u8),
+            Source::LabelLo(ref label) => bytecode.push((get_label_pc(label)? & 0x00FF) as u8),
             _ => (),
         }
         if let Source::Operand(_) | Source::LabelLo(_) | Source::LabelHi(_) = op.src {
