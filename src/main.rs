@@ -69,9 +69,6 @@ mod tests {
             0b00001101,
         ];
         assert_eq!(assemble(&lines).unwrap(), expected_bytecode);
-
-        //8F -> RAM                       // Assembler will throw an error!
-        //                 // Assembler will throw an error!
     }
 
     #[test]
@@ -84,5 +81,11 @@ mod tests {
     #[should_panic]
     fn test_assembler_err2() {
         assemble(&["ACC.plus -> LED".into()]).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_assembler_err3() {
+        assemble(&["loop".into(), "lo@loop -> RAM".into()]).unwrap();
     }
 }
