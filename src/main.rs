@@ -49,6 +49,8 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
     fn test_assembler() {
         let lines: [String; 9] = [
             "im_a_label:".into(),
@@ -69,6 +71,18 @@ mod tests {
         assert_eq!(assemble(&lines).unwrap(), expected_bytecode);
 
         //8F -> RAM                       // Assembler will throw an error!
-        //ACC.plus -> LED                 // Assembler will throw an error!
+        //                 // Assembler will throw an error!
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_assembler_err() {
+        assemble(&["8F -> RAM".into()]).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_assembler_err2() {
+        assemble(&["ACC.plus -> LED".into()]).unwrap();
     }
 }
