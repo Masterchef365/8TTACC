@@ -39,11 +39,17 @@ pub enum Destination {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-struct Operation {
+pub struct Operation {
     pub src: Source,
     pub dest: Destination,
     pub cond_1: bool,
     pub cond_carry: bool,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Statement {
+    Label(Label),
+    Operation(Operation),
 }
 
 fn parse_hex(input: &str) -> IResult<&str, u8> {
@@ -116,6 +122,25 @@ fn parse_operation(s: &str) -> IResult<&str, Operation> {
             cond_carry,
         },
     )(s)
+}
+
+fn parse_label(s: &str) -> IResult<&str, Label> {
+    map(terminated(parse_name, tag(":")), |s| s.to_string())(s)
+}
+
+fn parse_statement(s: &str) -> IResult<&str, Statement> {
+    alt((
+        map(parse_operation, Statement::Operation),
+        map(parse_label, Statement::Label),
+    ))(s)
+}
+
+pub fn parse_line(s: &str) -> IResult<&str, Option<Statement>> {
+    alt((
+        map(parse_statement, Some),
+        map(tag("//"), |_| None),
+        map(all_consuming(space0), |_| None),
+    ))(s)
 }
 
 #[test]
@@ -229,130 +254,53 @@ fn test_parse_operation() {
     );
 }
 
-/*
-pub type PortName<'s> = Vec<&'s str>;
-
-#[derive(Debug, PartialEq)]
-pub struct Operation<'s> {
-    pub src: PortName<'s>,
-    pub dest: PortName<'s>,
-}
-
-pub type Label<'a> = &'a str;
-
-#[derive(Debug, PartialEq)]
-pub enum Statement<'a> {
-    Label(Label<'a>),
-    Operation(Operation<'a>),
-}
-
-fn parse_name<'a>(s: &'a str) -> IResult<&'a str, &'a str> {
-    s.split_at_position1_complete(|item| !item.is_alphanum() && item != '_', ErrorKind::NoneOf)
-}
-
-fn parse_portname<'a>(s: &'a str) -> IResult<&'a str, PortName<'a>> {
-    separated_list1(tag("."), parse_name)(s)
-}
-
-fn parse_operation<'a>(s: &'a str) -> IResult<&'a str, Operation<'a>> {
-    let arrow = tuple((space1, tag("->"), space1));
-    let ports = tuple((terminated(parse_portname, arrow), parse_portname));
-    map(ports, |(src, dest)| Operation { src, dest })(s)
-}
-
-fn parse_label<'a>(s: &'a str) -> IResult<&'a str, Label<'a>> {
-    terminated(parse_name, tag(":"))(s)
-}
-
-fn parse_statement<'a>(s: &'a str) -> IResult<&'a str, Statement<'a>> {
-    alt((
-        map(parse_operation, Statement::Operation),
-        map(parse_label, Statement::Label),
-    ))(s)
-}
-
-pub fn parse_line<'a>(s: &'a str) -> IResult<&'a str, Option<Statement<'a>>> {
-    alt((
-        map(parse_statement, Some),
-        map(tag("//"), |_| None),
-        map(all_consuming(space0), |_| None),
-    ))(s)
-}
-
-#[test]
-fn test_parse_portname() {
-    assert!(parse_portname("").is_err());
-    assert_eq!(parse_portname("a"), Ok(("", vec!["a"])));
-    assert_eq!(parse_portname("a.b"), Ok(("", vec!["a", "b"])));
-    assert_eq!(parse_portname("a.b.c"), Ok(("", vec!["a", "b", "c"])));
-}
-
-#[test]
-fn test_parse_operation() {
-    assert_eq!(
-        parse_operation("a -> b"),
-        Ok((
-            "",
-            Operation {
-                src: vec!["a"],
-                dest: vec!["b"]
-            }
-        ))
-    );
-    assert_eq!(
-        parse_operation("a.c -> b.q"),
-        Ok((
-            "",
-            Operation {
-                src: vec!["a", "c"],
-                dest: vec!["b", "q"]
-            }
-        ))
-    );
-    assert!(parse_operation(" -> b.q.a").is_err());
-    assert!(parse_operation("a ->  ").is_err());
-}
-
 #[test]
 fn test_parse_label() {
     assert!(parse_label("").is_err());
     assert!(parse_label(":").is_err());
-    assert_eq!(parse_label("thisisalabel:"), Ok(("", "thisisalabel")));
+    assert_eq!(
+        parse_label("thisisalabel:"),
+        Ok(("", "thisisalabel".into()))
+    );
 }
 
 #[test]
 fn test_parse_statement() {
     assert_eq!(
-        parse_statement("a -> b"),
+        parse_statement("ACC -> ACC"),
         Ok((
             "",
             Statement::Operation(Operation {
-                src: vec!["a"],
-                dest: vec!["b"]
+                src: Source::Accumulator,
+                dest: Destination::Accumulator,
+                cond_carry: false,
+                cond_1: false,
             })
         ))
     );
     assert_eq!(
         parse_statement("thisisalabel:"),
-        Ok(("", Statement::Label("thisisalabel")))
+        Ok(("", Statement::Label("thisisalabel".into())))
     );
 }
 
 #[test]
 fn test_parse_line() {
     assert_eq!(
-        parse_line("a -> b"),
+        parse_line("RAM -> RAM : if_carry // Comment"),
         Ok((
-            "",
+            " // Comment",
             Some(Statement::Operation(Operation {
-                src: vec!["a"],
-                dest: vec!["b"]
+                src: Source::Memory,
+                dest: Destination::Memory,
+                cond_1: false,
+                cond_carry: true,
             }))
         ))
     );
     assert_eq!(
         parse_line("this_is_a_label:"),
-        Ok(("", Some(Statement::Label("this_is_a_label"))))
+        Ok(("", Some(Statement::Label("this_is_a_label".into()))))
     );
     assert_eq!(parse_line("//"), Ok(("", None)));
     assert_eq!(
@@ -362,4 +310,3 @@ fn test_parse_line() {
     assert_eq!(parse_line(""), Ok(("", None)));
     assert_eq!(parse_line("\t\t     "), Ok(("", None)));
 }
-*/
