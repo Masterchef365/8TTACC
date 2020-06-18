@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
+use common::*;
 mod parser;
 use parser::*;
 mod assembler;

@@ -1,8 +1,13 @@
 use crate::parser::*;
+use common::*;
 use std::collections::HashMap;
 use thiserror::Error;
 
-impl Source {
+pub trait IntoInstruction {
+    fn instruction_bits(&self) -> u8;
+}
+
+impl IntoInstruction for Source {
     fn instruction_bits(&self) -> u8 {
         match self {
             Source::Expansion => 0b00_000000,
@@ -13,7 +18,7 @@ impl Source {
     }
 }
 
-impl Destination {
+impl IntoInstruction for Destination {
     fn instruction_bits(&self) -> u8 {
         match self {
             Destination::Memory => 0b00_0000_00,
@@ -31,7 +36,7 @@ impl Destination {
     }
 }
 
-impl Operation {
+impl IntoInstruction for Operation {
     fn instruction_bits(&self) -> u8 {
         let src = self.src.instruction_bits();
         let dest = self.dest.instruction_bits();

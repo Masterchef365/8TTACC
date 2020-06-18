@@ -1,0 +1,11 @@
+[package]
+name = "assembler"
+version = "0.1.0"
+authors = ["Masterchef365 <duncan.freeman1@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+nom = "6.0.0-alpha1"
+thiserror = "1"
+anyhow = "1"
+common = { path = "../common" }
