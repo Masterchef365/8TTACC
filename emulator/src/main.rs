@@ -12,6 +12,9 @@ fn main() -> Result<()> {
         None => bail!("Usage: <file_name.s>"),
     };
     let text_segment = fs::read(path)?;
+    for instruction in InstructionDecoder::new(&text_segment) {
+        dbg!(instruction);
+    }
     Ok(())
 }
 

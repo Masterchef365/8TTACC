@@ -8,3 +8,6 @@ edition = "2018"
 thiserror = "1"
 anyhow = "1"
 common = { path = "../common" }
+
+[dev-dependencies]
+assembler = { path = "../assembler" }
