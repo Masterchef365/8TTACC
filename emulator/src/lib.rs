@@ -2,71 +2,6 @@ use thiserror::Error;
 mod decoder;
 use common::*;
 
-pub type Word = u8;
-
-#[derive(Debug, Default)]
-pub struct Accumulator {
-    pub value: Word,
-}
-
-impl Accumulator {
-    fn nand(&mut self, value: Word) {
-        self.value = !(self.value & value);
-    }
-
-    /// Returns true if the carry flag is set
-    fn add(&mut self, value: Word) -> bool {
-        let (new_val, carry) = self.value.overflowing_add(value);
-        self.value = new_val;
-        carry
-    }
-
-    /// Returns true of the one flag is set
-    fn set(&mut self, value: Word) -> bool {
-        self.value = value;
-        value == 0b1111_1111
-    }
-
-    fn get(&self) -> Word {
-        self.value
-    }
-}
-
-#[derive(Default, Debug)]
-pub struct ProgramCounter {
-    pub value: u16,
-}
-
-impl ProgramCounter {
-    fn set_lo(&mut self, value: Word) {
-        self.value = self.value & 0xFF00 + value as u16;
-    }
-
-    fn set_hi(&mut self, value: Word) {
-        self.value = self.value & 0x00FF + ((value as u16) << 8);
-    }
-
-    fn set(&mut self, value: u16) {
-        self.value = value;
-    }
-
-    fn advance(&mut self, advance: u16) {
-        self.value = self.value.wrapping_add(advance);
-    }
-
-    fn get(&self) -> u16 {
-        self.value
-    }
-}
-
-#[derive(Debug, Clone, Error)]
-pub enum EmulatorError {
-    #[error("Instruction decoder failed, {0}")]
-    Decoder(#[from] decoder::DecoderError), // Derive From?
-    #[error("Illegal instruction")]
-    Illegal(Operation),
-}
-
 #[derive(Default, Debug)]
 pub struct Emulator {
     pub flag_1: bool,
@@ -116,10 +51,121 @@ impl Emulator {
 
     pub fn push(&mut self, dest: Destination, value: Word) {
         match dest {
+            Destination::ProgramCounterLatch => self.pc.latch(value),
+            Destination::ProgramCounter => self.pc.jump(value),
             Destination::Accumulator => self.flag_1 = self.acc.set(value),
             Destination::AccumulatorPlus => self.flag_carry = self.acc.add(value),
             Destination::AccumulatorNand => self.acc.nand(value),
             _ => todo!("{:?}", dest),
         }
+    }
+}
+
+pub type Word = u8;
+
+#[derive(Debug, Clone, Error)]
+pub enum EmulatorError {
+    #[error("Instruction decoder failed, {0}")]
+    Decoder(#[from] decoder::DecoderError), // Derive From?
+    #[error("Illegal instruction")]
+    Illegal(Operation),
+}
+
+#[derive(Debug, Default)]
+pub struct Accumulator {
+    pub value: Word,
+}
+
+impl Accumulator {
+    fn nand(&mut self, value: Word) {
+        self.value = !(self.value & value);
+    }
+
+    /// Returns true if the carry flag is set
+    fn add(&mut self, value: Word) -> bool {
+        let (new_val, carry) = self.value.overflowing_add(value);
+        self.value = new_val;
+        carry
+    }
+
+    /// Returns true of the one flag is set
+    fn set(&mut self, value: Word) -> bool {
+        self.value = value;
+        value == 0b1111_1111
+    }
+
+    fn get(&self) -> Word {
+        self.value
+    }
+}
+
+#[derive(Default, Debug)]
+pub struct ProgramCounter {
+    pub value: u16,
+    pub latch: Word,
+}
+
+impl ProgramCounter {
+    fn latch(&mut self, value: Word) {
+        self.latch = value;
+    }
+
+    fn jump(&mut self, value: Word) {
+        self.value = ((self.latch as u16) << 8) + (value as u16);
+    }
+
+    fn set(&mut self, value: u16) {
+        self.value = value;
+    }
+
+    fn advance(&mut self, advance: u16) {
+        self.value = self.value.wrapping_add(advance);
+    }
+
+    fn get(&self) -> u16 {
+        self.value
+    }
+}
+
+#[derive(Default, Debug)]
+pub struct Led {
+    pub value: Word,
+}
+
+impl Led {
+    fn set(&mut self, value: Word) {
+        self.value = value;
+    }
+
+    fn get(&self) -> Word {
+        self.value
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_program_counter() {
+        let mut pc = ProgramCounter::default();
+        pc.latch(0x5F);
+        assert_eq!(pc.get(), 0x0000);
+        pc.jump(0xA7);
+        assert_eq!(pc.get(), 0x5FA7);
+        pc.advance(0x02);
+        assert_eq!(pc.get(), 0x5FA9);
+    }
+
+    #[test]
+    fn test_accumulator() {
+        let mut acc = Accumulator::default();
+        assert_eq!(acc.get(), 0x00);
+        acc.set(0b10100101);
+        acc.nand(0b01101110);
+        assert_eq!(acc.get(), 0b11011011);
+        acc.set(0x5F);
+        assert!(acc.add(0xF0));
+        assert_eq!(acc.get(), 0x4F);
     }
 }
