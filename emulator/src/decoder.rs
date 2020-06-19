@@ -1,12 +1,13 @@
 use common::*;
+use std::io::Read;
 use thiserror::Error;
 
 #[derive(Debug, Clone, Copy, Error)]
 pub enum DecoderError {
     #[error("Unrecognized destination")]
     UnrecognizedDestination,
-    #[error("Opcode unfinished")]
-    UnfinishedOpcode,
+    #[error("Tried to read an instruction off the end of the data segment")]
+    InvalidRead,
 }
 
 pub trait FromByte: Sized {
@@ -57,33 +58,16 @@ impl FromByte for Operation {
     }
 }
 
-pub struct InstructionDecoder<'a> {
-    iter: std::slice::Iter<'a, u8>,
-}
-
-impl<'a> InstructionDecoder<'a> {
-    pub fn new(bin: &'a [u8]) -> Self {
-        Self { iter: bin.iter() }
+/// Reads an operation and advances the instruction pointer accordingly
+pub fn read_operation(buf: &[u8], program_counter: &mut usize) -> Result<Operation, DecoderError> {
+    let instruction = *buf.get(*program_counter).ok_or(DecoderError::InvalidRead)?;
+    *program_counter += 1;
+    let mut op = Operation::from_byte(instruction)?;
+    if let Source::Operand(value) = &mut op.src {
+        *value = *buf.get(*program_counter).ok_or(DecoderError::InvalidRead)?;
+        *program_counter += 1;
     }
-}
-
-impl Iterator for InstructionDecoder<'_> {
-    type Item = Result<Operation, DecoderError>;
-    fn next(&mut self) -> Option<Self::Item> {
-        let byte = self.iter.next()?;
-        let op = Operation::from_byte(*byte);
-        let mut op = match op {
-            Ok(op) => op,
-            e => return Some(e),
-        };
-        if let Source::Operand(value) = &mut op.src {
-            match self.iter.next() {
-                Some(byte) => *value = *byte,
-                None => return Some(Err(DecoderError::UnfinishedOpcode)),
-            }
-        }
-        Some(Ok(op))
-    }
+    Ok(op)
 }
 
 #[cfg(test)]
@@ -104,9 +88,11 @@ FF -> RAM.high : if_1 | if_carry
 im_also_a_label:
 lo@im_also_a_label -> PC.latch";
         let bytecode = assemble(text).unwrap();
-        let ops = InstructionDecoder::new(&bytecode)
-            .collect::<Result<Vec<_>, DecoderError>>()
-            .unwrap();
+        let mut program_counter = 0;
+        let mut ops = Vec::new();
+        while program_counter < bytecode.len() {
+            ops.push(read_operation(&bytecode, &mut program_counter).unwrap());
+        }
         let expected_ops = vec![
             Operation {
                 src: Source::Accumulator,

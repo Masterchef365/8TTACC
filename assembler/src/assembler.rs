@@ -56,7 +56,6 @@ pub enum AssemblerError {
     ForbiddenInstruction { line: usize },
 }
 
-// (line#, Statement)?
 pub fn assemble(lines: &[(Statement, usize)]) -> Result<Vec<u8>, AssemblerError> {
     let mut labels = HashMap::new();
     let mut pc: u16 = 0;
