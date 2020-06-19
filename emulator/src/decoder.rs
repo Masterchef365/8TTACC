@@ -58,16 +58,20 @@ impl FromByte for Operation {
     }
 }
 
-/// Reads an operation and advances the instruction pointer accordingly
-pub fn read_operation(buf: &[u8], program_counter: &mut usize) -> Result<Operation, DecoderError> {
-    let instruction = *buf.get(*program_counter).ok_or(DecoderError::InvalidRead)?;
-    *program_counter += 1;
+/// Attempts to read the operation in `buf` at `program_counter`, returning the amount the program
+/// counter should advance by and the operation.
+pub fn read_operation(
+    buf: &[u8],
+    program_counter: usize,
+) -> Result<(Operation, usize), DecoderError> {
+    let instruction = *buf.get(program_counter).ok_or(DecoderError::InvalidRead)?;
+    let mut advance = 1;
     let mut op = Operation::from_byte(instruction)?;
     if let Source::Operand(value) = &mut op.src {
-        *value = *buf.get(*program_counter).ok_or(DecoderError::InvalidRead)?;
-        *program_counter += 1;
+        *value = *buf.get(program_counter + 1).ok_or(DecoderError::InvalidRead)?;
+        advance += 1;
     }
-    Ok(op)
+    Ok((op, advance))
 }
 
 #[cfg(test)]
@@ -91,7 +95,9 @@ lo@im_also_a_label -> PC.latch";
         let mut program_counter = 0;
         let mut ops = Vec::new();
         while program_counter < bytecode.len() {
-            ops.push(read_operation(&bytecode, &mut program_counter).unwrap());
+            let (op, advance) = read_operation(&bytecode, program_counter).unwrap();
+            ops.push(op);
+            program_counter += advance;
         }
         let expected_ops = vec![
             Operation {
