@@ -9,6 +9,7 @@ pub struct Emulator {
     pub program: Box<[u8]>,
     pub pc: ProgramCounter,
     pub acc: Accumulator,
+    pub mem: Memory,
     pub led: Led,
 }
 
@@ -42,16 +43,18 @@ impl Emulator {
         };
 
         if execute {
-            self.push(op.dest, self.pull(op.src));
+            let word = self.pull(op.src);
+            self.push(op.dest, word);
         }
 
         Ok(())
     }
 
-    pub fn pull(&self, src: Source) -> Word {
+    pub fn pull(&mut self, src: Source) -> Word {
         match src {
             Source::Operand(value) => value,
             Source::Accumulator => self.acc.get(),
+            Source::Memory => self.mem.read(),
             _ => todo!("{:?}", src),
         }
     }
@@ -64,6 +67,9 @@ impl Emulator {
             Destination::AccumulatorPlus => self.flag_carry = self.acc.add(value),
             Destination::AccumulatorNand => self.acc.nand(value),
             Destination::Led => self.led.set(value),
+            Destination::Memory => self.mem.write(value),
+            Destination::MemAddressLo => self.mem.latch_low(value),
+            Destination::MemAddressHi => self.mem.latch_high(value),
             _ => todo!("{:?}", dest),
         }
     }
@@ -87,24 +93,24 @@ pub struct Accumulator {
 }
 
 impl Accumulator {
-    fn nand(&mut self, value: Word) {
+    pub fn nand(&mut self, value: Word) {
         self.value = !(self.value & value);
     }
 
     /// Returns true if the carry flag is set
-    fn add(&mut self, value: Word) -> bool {
+    pub fn add(&mut self, value: Word) -> bool {
         let (new_val, carry) = self.value.overflowing_add(value);
         self.value = new_val;
         carry
     }
 
     /// Returns true of the one flag is set
-    fn set(&mut self, value: Word) -> bool {
+    pub fn set(&mut self, value: Word) -> bool {
         self.value = value;
         value == 0b1111_1111
     }
 
-    fn get(&self) -> Word {
+    pub fn get(&self) -> Word {
         self.value
     }
 }
@@ -116,23 +122,23 @@ pub struct ProgramCounter {
 }
 
 impl ProgramCounter {
-    fn latch(&mut self, value: Word) {
+    pub fn latch(&mut self, value: Word) {
         self.latch = value;
     }
 
-    fn jump(&mut self, value: Word) {
+    pub fn jump(&mut self, value: Word) {
         self.value = ((self.latch as u16) << 8) + (value as u16);
     }
 
-    fn set(&mut self, value: u16) {
+    pub fn set(&mut self, value: u16) {
         self.value = value;
     }
 
-    fn advance(&mut self, advance: u16) {
+    pub fn advance(&mut self, advance: u16) {
         self.value = self.value.wrapping_add(advance);
     }
 
-    fn get(&self) -> u16 {
+    pub fn get(&self) -> u16 {
         self.value
     }
 }
@@ -143,12 +149,51 @@ pub struct Led {
 }
 
 impl Led {
-    fn set(&mut self, value: Word) {
+    pub fn set(&mut self, value: Word) {
         self.value = value;
     }
 
-    fn get(&self) -> Word {
+    pub fn get(&self) -> Word {
         self.value
+    }
+}
+
+#[derive(Default, Debug)]
+pub struct Memory {
+    pub values: Vec<Word>,
+    pub low_latch: Word,
+    pub hi_latch: Word,
+}
+
+impl Memory {
+    pub fn latch_low(&mut self, value: Word) {
+        self.low_latch = value;
+    }
+
+    pub fn latch_high(&mut self, value: Word) {
+        self.hi_latch = value;
+    }
+
+    pub fn address(&self) -> u16 {
+        (self.low_latch as u16) + ((self.hi_latch as u16) << 8)
+    }
+
+    fn expand(&mut self) {
+        let address = self.address() as usize;
+        if address >= self.values.len() {
+            self.values.resize_with(address + 1, || 0);
+        }
+    }
+
+    pub fn read(&mut self) -> Word {
+        self.expand();
+        self.values[self.address() as usize]
+    }
+
+    pub fn write(&mut self, value: Word) {
+        self.expand();
+        let addr = self.address() as usize;
+        self.values[addr] = value;
     }
 }
 
@@ -177,5 +222,21 @@ mod tests {
         acc.set(0x5F);
         assert!(acc.add(0xF0));
         assert_eq!(acc.get(), 0x4F);
+    }
+
+    #[test]
+    fn test_memory() {
+        let mut mem = Memory::default();
+        assert_eq!(mem.address(), 0x0000);
+        mem.latch_high(0xFF);
+        assert_eq!(mem.address(), 0xFF00);
+        assert_eq!(mem.read(), 0x00);
+        mem.write(0x57);
+        assert_eq!(mem.read(), 0x57);
+        mem.latch_low(0x88);
+        assert_eq!(mem.address(), 0xFF88);
+        assert_eq!(mem.read(), 0x00);
+        mem.write(0x55);
+        assert_eq!(mem.read(), 0x55);
     }
 }

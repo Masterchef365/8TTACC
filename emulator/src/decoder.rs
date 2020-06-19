@@ -1,5 +1,4 @@
 use common::*;
-use std::io::Read;
 use thiserror::Error;
 
 #[derive(Debug, Clone, Copy, Error)]
