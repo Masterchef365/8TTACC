@@ -60,13 +60,18 @@ ACC.plus -> LED                  // Assembler will throw an error!
 
 # Macros
 It is recommended to use the `nasm` preprocessor to expand macros for this language. To invoke the `nasm` preprocessor, simply pass your source file in with the `-E` argument:
-`nasm -E <source.s>`
+
+`nasm -E <source.s> > preprocessed.s`
+
+Or, if you wish to preprocess and assemble on a single line in Bash:
+
+`cargo run --bin assembler -- <(nasm -E source.s) out.bin`
 
 Documentation here:
 * https://www.nasm.us/doc/nasmdoc4.html
 * https://www.tortall.net/projects/yasm/manual/html/nasm-multi-line-macros.html
 
-## Example
+Example:
 ```
 %macro jconst 0
 hi@constant_label -> PC.latch
