@@ -78,8 +78,8 @@ lo@constant_label -> PC
 %endmacro
 
 %macro jump 1
-hi@ -> PC.latch
-lo@ -> PC
+hi@%1 -> PC.latch
+lo@%1 -> PC
 %endmacro
 
 %define MYCONST 03
