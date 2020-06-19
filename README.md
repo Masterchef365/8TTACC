@@ -57,13 +57,33 @@ hi@im_a_label -> PC
 8F -> RAM                        // Assembler will throw an error!
 ACC.plus -> LED                  // Assembler will throw an error!
 ```
-Later we may also introduce macros, like so:
+
+# Macros
+It is recommended to use the `nasm` preprocessor to expand macros for this language. To invoke the `nasm` preprocessor, simply pass your source file in with the `-E` argument:
+`nasm -E <source.s>`
+
+Documentation here:
+* https://www.nasm.us/doc/nasmdoc4.html
+* https://www.tortall.net/projects/yasm/manual/html/nasm-multi-line-macros.html
+
+## Example
 ```
-def set_pc(label):
-    lo@$label -> PC.latch
-    hi@$label -> PC
-    end
+%macro jconst 0
+hi@constant_label -> PC.latch
+lo@constant_label -> PC
+%endmacro
+
+%macro jump 1
+hi@ -> PC.latch
+lo@ -> PC
+%endmacro
+
+%define MYCONST 03
+MYCONST -> ACC
 
 infinite_loop:
-set_pc(infinite_loop)
+jump infinite_loop
+
+constant_label:
+jconst
 ```

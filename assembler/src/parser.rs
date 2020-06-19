@@ -105,6 +105,7 @@ pub fn parse_line(s: &str) -> IResult<&str, Option<Statement>> {
     alt((
         map(parse_statement, Some),
         map(tag("//"), |_| None),
+        map(tag("%"), |_| None),
         map(all_consuming(space0), |_| None),
     ))(s)
 }
