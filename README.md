@@ -1,12 +1,12 @@
 # 8TTACC Toolchain
-An assembler toolchain for the 8TTACC Computer.
+A toolchain for the 8TTACC 8-bit CMOS TTA Computer.
 
 The project is split into a number of crates:
 * `common/`: Common types used across the project
 * `assembler/`: A two-pass assembler
-* `emulator/`: A WIP emulator (and decompiler)
+* `emulator/`: A basic emulator
 
-# Running:
+# Running
 Get the Rust toolchain from https://rustup.rs/
 
 Assembler: `cargo run --bin assember -- <source.s> <out.bin>`
@@ -14,7 +14,6 @@ Assembler: `cargo run --bin assember -- <source.s> <out.bin>`
 Emulator: `cargo run --bin emulator -- <out.bin>`
 
 # Syntax
-
 Sources:
 ```
 00: EXP
