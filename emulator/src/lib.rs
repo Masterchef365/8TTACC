@@ -9,14 +9,21 @@ pub struct Emulator {
     pub program: Box<[u8]>,
     pub pc: ProgramCounter,
     pub acc: Accumulator,
+    pub led: Led,
 }
 
 impl Emulator {
-    pub fn from_program(program: Box<[u8]>) -> Self {
-        Self {
+    pub fn from_program(program: Box<[u8]>) -> Result<Self, EmulatorError> {
+        let first_instruction = *program
+            .get(0)
+            .ok_or(EmulatorError::Decoder(decoder::DecoderError::InvalidRead))?;
+        if first_instruction != 0b01001100 {
+            return Err(EmulatorError::MissingNop);
+        }
+        Ok(Self {
             program,
             ..Default::default()
-        }
+        })
     }
 
     pub fn step(&mut self) -> Result<(), EmulatorError> {
@@ -56,6 +63,7 @@ impl Emulator {
             Destination::Accumulator => self.flag_1 = self.acc.set(value),
             Destination::AccumulatorPlus => self.flag_carry = self.acc.add(value),
             Destination::AccumulatorNand => self.acc.nand(value),
+            Destination::Led => self.led.set(value),
             _ => todo!("{:?}", dest),
         }
     }
@@ -65,10 +73,12 @@ pub type Word = u8;
 
 #[derive(Debug, Clone, Error)]
 pub enum EmulatorError {
-    #[error("Instruction decoder failed, {0}")]
+    #[error(transparent)]
     Decoder(#[from] decoder::DecoderError), // Derive From?
     #[error("Illegal instruction")]
     Illegal(Operation),
+    #[error("Missing initial NOP")]
+    MissingNop,
 }
 
 #[derive(Debug, Default)]

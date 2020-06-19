@@ -9,7 +9,7 @@ fn main() -> Result<()> {
         None => bail!("Usage: <file_name.s>"),
     };
     let program = fs::read(path)?;
-    let mut emulator = Emulator::from_program(program.into_boxed_slice());
+    let mut emulator = Emulator::from_program(program.into_boxed_slice())?;
     loop {
         dbg!(&emulator);
         emulator.step()?;
