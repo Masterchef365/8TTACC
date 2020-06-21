@@ -1,5 +1,6 @@
 #![allow(unused_imports)]
 #![allow(dead_code)]
+use common::*;
 use nom::branch::*;
 use nom::bytes::complete::*;
 use nom::character::complete::*;
@@ -10,7 +11,6 @@ use nom::multi::*;
 use nom::sequence::*;
 use nom::IResult;
 use nom::{AsChar, InputTakeAtPosition};
-use common::*;
 
 #[derive(Debug, PartialEq)]
 pub enum Statement {
@@ -24,8 +24,16 @@ fn parse_hex(input: &str) -> IResult<&str, u8> {
     })(input)
 }
 
-fn parse_name<'a>(s: &'a str) -> IResult<&'a str, &'a str> {
+fn parse_name<'a>(s: &str) -> IResult<&str, &str> {
     s.split_at_position1_complete(|item| !item.is_alphanum() && item != '_', ErrorKind::NoneOf)
+}
+
+fn parse_char<'a>(s: &str) -> IResult<&str, u8> {
+    map(delimited(tag("'"), anychar, tag("'")), |c| {
+        let mut buf = [0];
+        c.encode_utf8(&mut buf);
+        buf[0]
+    })(s)
 }
 
 fn parse_source(s: &str) -> IResult<&str, Source> {
@@ -39,7 +47,8 @@ fn parse_source(s: &str) -> IResult<&str, Source> {
         map(preceded(tag("hi@"), parse_name), |label| {
             Source::LabelHi(label.to_string())
         }),
-        map(parse_hex, |op| Source::Operand(op)),
+        map(parse_char, Source::Operand),
+        map(parse_hex, Source::Operand),
     ))(s)
 }
 
@@ -124,6 +133,17 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_char() {
+        assert!(parse_char("'").is_err());
+        assert!(parse_char("'a").is_err());
+        assert!(parse_char("a'").is_err());
+        assert!(parse_char("a").is_err());
+        assert!(parse_char("").is_err());
+        assert_eq!(parse_char("'a'"), Ok(("", 0x61)));
+        assert_eq!(parse_char("'a'thisi sa buncha JUNK"), Ok(("thisi sa buncha JUNK", 0x61)));
+    }
+
+    #[test]
     fn test_parse_source() {
         assert!(parse_source("").is_err());
         assert!(parse_source("0").is_err());
@@ -194,6 +214,18 @@ mod tests {
                 Operation {
                     src: Source::Operand(0x5F),
                     dest: Destination::Accumulator,
+                    cond_1: false,
+                    cond_carry: false,
+                }
+            ))
+        );
+        assert_eq!(
+            parse_operation("'q' -> RAM // Comment"),
+            Ok((
+                " // Comment",
+                Operation {
+                    src: Source::Operand(0x71),
+                    dest: Destination::Memory,
                     cond_1: false,
                     cond_carry: false,
                 }
