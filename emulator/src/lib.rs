@@ -58,6 +58,7 @@ impl Emulator {
             Source::Accumulator => self.acc.get(),
             Source::Memory => self.mem.read(),
             Source::Serial => self.ser.read(),
+            _ => unreachable!("This should always be an operand..."),
         }
     }
 
@@ -73,6 +74,8 @@ impl Emulator {
             Destination::MemAddressLo => self.mem.latch_low(value),
             Destination::MemAddressHi => self.mem.latch_high(value),
             Destination::Serial => self.ser.write(value),
+            Destination::CarrySet => self.flag_carry = true,
+            Destination::CarryReset => self.flag_carry = false,
         }
     }
 }
