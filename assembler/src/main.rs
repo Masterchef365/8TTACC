@@ -11,6 +11,9 @@ fn main() -> Result<()> {
     };
 
     let text = fs::read_to_string(input_path)?;
+    if text == "" {
+        bail!("Empty input file!");
+    }
     let bytecode = assemble(&text)?;
 
     fs::write(output_path, &bytecode)?;
