@@ -30,7 +30,7 @@ fn parse_name<'a>(s: &'a str) -> IResult<&'a str, &'a str> {
 
 fn parse_source(s: &str) -> IResult<&str, Source> {
     alt((
-        map(tag("EXP"), |_| Source::Serial),
+        map(tag("SER"), |_| Source::Serial),
         map(tag("ACC"), |_| Source::Accumulator),
         map(tag("RAM"), |_| Source::Memory),
         map(preceded(tag("lo@"), parse_name), |label| {
@@ -56,6 +56,7 @@ fn parse_destination(s: &str) -> IResult<&str, Destination> {
         map(tag("LED"), |_| Destination::Led),
         map(tag("carry.set"), |_| Destination::CarrySet),
         map(tag("carry.reset"), |_| Destination::CarryReset),
+        map(tag("SER"), |_| Destination::Serial),
     ))(s)
 }
 

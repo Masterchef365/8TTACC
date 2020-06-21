@@ -11,7 +11,7 @@ fn main() -> Result<()> {
     let program = fs::read(path)?;
     let mut emulator = Emulator::from_program(program.into_boxed_slice())?;
     loop {
-        dbg!(&emulator);
+        //println!("{:#X?}", emulator);
         emulator.step()?;
     }
     //Ok(())
