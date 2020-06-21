@@ -1,6 +1,7 @@
 use thiserror::Error;
 mod decoder;
 use common::*;
+use std::io::{self, Read, Write};
 
 #[derive(Default, Debug)]
 pub struct Emulator {
@@ -11,6 +12,7 @@ pub struct Emulator {
     pub acc: Accumulator,
     pub mem: Memory,
     pub led: Led,
+    pub ser: Serial,
 }
 
 impl Emulator {
@@ -55,7 +57,7 @@ impl Emulator {
             Source::Operand(value) => value,
             Source::Accumulator => self.acc.get(),
             Source::Memory => self.mem.read(),
-            _ => todo!("{:?}", src),
+            Source::Serial => self.ser.read(),
         }
     }
 
@@ -70,7 +72,7 @@ impl Emulator {
             Destination::Memory => self.mem.write(value),
             Destination::MemAddressLo => self.mem.latch_low(value),
             Destination::MemAddressHi => self.mem.latch_high(value),
-            _ => todo!("{:?}", dest),
+            Destination::Serial => self.ser.write(value),
         }
     }
 }
@@ -194,6 +196,37 @@ impl Memory {
         self.expand();
         let addr = self.address() as usize;
         self.values[addr] = value;
+    }
+}
+
+#[derive(Debug)]
+pub struct Serial {
+    in_stream: io::Stdin,
+    out_stream: io::Stdout,
+}
+
+impl Default for Serial {
+    fn default() -> Self {
+        Self {
+            in_stream: io::stdin(),
+            out_stream: io::stdout(),
+        }
+    }
+}
+
+impl Serial {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn write(&mut self, value: Word) {
+        self.out_stream.lock().write(&[value]).expect("Stdout error");
+    }
+
+    pub fn read(&mut self) -> Word {
+        let mut buf = [0u8];
+        self.in_stream.lock().read(&mut buf).expect("Stdout error");
+        buf[0]
     }
 }
 

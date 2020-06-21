@@ -30,7 +30,7 @@ fn parse_name<'a>(s: &'a str) -> IResult<&'a str, &'a str> {
 
 fn parse_source(s: &str) -> IResult<&str, Source> {
     alt((
-        map(tag("EXP"), |_| Source::Expansion),
+        map(tag("EXP"), |_| Source::Serial),
         map(tag("ACC"), |_| Source::Accumulator),
         map(tag("RAM"), |_| Source::Memory),
         map(preceded(tag("lo@"), parse_name), |label| {
@@ -126,7 +126,7 @@ mod tests {
     fn test_parse_source() {
         assert!(parse_source("").is_err());
         assert!(parse_source("0").is_err());
-        assert_eq!(parse_source("EXP"), Ok(("", Source::Expansion)));
+        assert_eq!(parse_source("EXP"), Ok(("", Source::Serial)));
         assert_eq!(parse_source("ACC"), Ok(("", Source::Accumulator)));
         assert_eq!(parse_source("RAM"), Ok(("", Source::Memory)));
         assert_eq!(parse_source("00"), Ok(("", Source::Operand(0x00))));

@@ -2,7 +2,7 @@ pub type Label = String;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Source {
-    Expansion,
+    Serial,
     Accumulator,
     Memory,
     Operand(u8),
@@ -23,6 +23,7 @@ pub enum Destination {
     Led,
     CarrySet,
     CarryReset,
+    Serial,
 }
 
 #[derive(Debug, PartialEq, Clone)]

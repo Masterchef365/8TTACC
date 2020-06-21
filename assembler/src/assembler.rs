@@ -10,7 +10,7 @@ pub trait IntoInstruction {
 impl IntoInstruction for Source {
     fn instruction_bits(&self) -> u8 {
         match self {
-            Source::Expansion => 0b00_000000,
+            Source::Serial => 0b00_000000,
             Source::Accumulator => 0b01_000000,
             Source::Memory => 0b10_000000,
             Source::Operand(_) | Source::LabelHi(_) | Source::LabelLo(_) => 0b11_000000,
@@ -29,6 +29,7 @@ impl IntoInstruction for Destination {
             Destination::ProgramCounter => 0b00_0101_00,
             Destination::MemAddressLo => 0b00_0110_00,
             Destination::MemAddressHi => 0b00_0111_00,
+            Destination::Serial => 0b00_1000_00,
             Destination::Led => 0b00_1001_00,
             Destination::CarrySet => 0b00_1010_00,
             Destination::CarryReset => 0b00_1011_00,

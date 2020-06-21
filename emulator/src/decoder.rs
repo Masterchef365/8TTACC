@@ -24,6 +24,7 @@ impl FromByte for Destination {
             0b00_0101_00 => Ok(Destination::ProgramCounter),
             0b00_0110_00 => Ok(Destination::MemAddressLo),
             0b00_0111_00 => Ok(Destination::MemAddressHi),
+            0b00_1000_00 => Ok(Destination::Serial),
             0b00_1001_00 => Ok(Destination::Led),
             0b00_1010_00 => Ok(Destination::CarrySet),
             0b00_1011_00 => Ok(Destination::CarryReset),
@@ -35,7 +36,7 @@ impl FromByte for Destination {
 impl FromByte for Source {
     fn from_byte(byte: u8) -> Result<Self, DecoderError> {
         Ok(match byte & 0b11_000000 {
-            0b00_000000 => Source::Expansion,
+            0b00_000000 => Source::Serial,
             0b01_000000 => Source::Accumulator,
             0b10_000000 => Source::Memory,
             0b11_000000 => Source::Operand(0x00),
