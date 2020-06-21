@@ -112,7 +112,7 @@ fn parse_statement(s: &str) -> IResult<&str, Statement> {
 
 pub fn parse_line(s: &str) -> IResult<&str, Option<Statement>> {
     alt((
-        map(parse_statement, Some),
+        map(preceded(space0, parse_statement), Some),
         map(tag("//"), |_| None),
         map(tag("%"), |_| None),
         map(all_consuming(space0), |_| None),
@@ -289,7 +289,7 @@ mod tests {
     #[test]
     fn test_parse_line() {
         assert_eq!(
-            parse_line("RAM -> RAM : if_carry // Comment"),
+            parse_line("\tRAM -> RAM : if_carry // Comment"),
             Ok((
                 " // Comment",
                 Some(Statement::Operation(Operation {
@@ -301,7 +301,7 @@ mod tests {
             ))
         );
         assert_eq!(
-            parse_line("this_is_a_label:"),
+            parse_line("    this_is_a_label:"),
             Ok(("", Some(Statement::Label("this_is_a_label".into()))))
         );
         assert_eq!(parse_line("//"), Ok(("", None)));
