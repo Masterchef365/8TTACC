@@ -70,7 +70,8 @@ impl Emulator {
             Destination::Memory => self.mem.write(value),
             Destination::MemAddressLo => self.mem.latch_low(value),
             Destination::MemAddressHi => self.mem.latch_high(value),
-            _ => todo!("{:?}", dest),
+            Destination::CarrySet => self.flag_carry = true,
+            Destination::CarryReset => self.flag_carry = false,
         }
     }
 }
