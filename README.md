@@ -20,6 +20,7 @@ Sources:
 01: ACC
 10: RAM
 11: <literal in hex> (Special, loads next byte)
+11: 'c' (Load character)
 ```
 
 Destinations:
