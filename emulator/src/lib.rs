@@ -72,6 +72,7 @@ impl Emulator {
             Destination::MemAddressHi => self.mem.latch_high(value),
             Destination::CarrySet => self.flag_carry = true,
             Destination::CarryReset => self.flag_carry = false,
+            _ => todo!("Serial and expansion"),
         }
     }
 }

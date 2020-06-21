@@ -32,6 +32,8 @@ impl IntoInstruction for Destination {
             Destination::Led => 0b00_1001_00,
             Destination::CarrySet => 0b00_1010_00,
             Destination::CarryReset => 0b00_1011_00,
+            Destination::Serial => 0b00_1000_00,
+            Destination::ExpansionSelect => 0b00_1100_00,
         }
     }
 }

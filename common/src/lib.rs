@@ -23,6 +23,8 @@ pub enum Destination {
     Led,
     CarrySet,
     CarryReset,
+    ExpansionSelect,
+    Serial,
 }
 
 #[derive(Debug, PartialEq, Clone)]

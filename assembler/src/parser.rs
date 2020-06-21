@@ -65,6 +65,8 @@ fn parse_destination(s: &str) -> IResult<&str, Destination> {
         map(tag("LED"), |_| Destination::Led),
         map(tag("carry.set"), |_| Destination::CarrySet),
         map(tag("carry.reset"), |_| Destination::CarryReset),
+        map(tag("EXP.sel"), |_| Destination::ExpansionSelect),
+        map(tag("Serial.out"), |_| Destination::Serial),
     ))(s)
 }
 
@@ -197,6 +199,14 @@ mod tests {
         assert_eq!(
             parse_destination("carry.reset"),
             Ok(("", Destination::CarryReset))
+        );
+        assert_eq!(
+            parse_destination("EXP.sel"),
+            Ok(("", Destination::ExpansionSelect))
+        );
+        assert_eq!(
+            parse_destination("Serial.out"),
+            Ok(("", Destination::Serial))
         );
     }
 
