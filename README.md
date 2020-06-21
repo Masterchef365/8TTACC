@@ -33,9 +33,11 @@ Destinations:
 0101: PC
 0110: RAM.low
 0111: RAM.high
+1000: Serial.out
 1001: LED
 1010: carry.set
 1011: carry.reset
+1100: EXP.sel
 ```
 
 Conditions:

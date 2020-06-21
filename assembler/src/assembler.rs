@@ -29,10 +29,10 @@ impl IntoInstruction for Destination {
             Destination::ProgramCounter => 0b00_0101_00,
             Destination::MemAddressLo => 0b00_0110_00,
             Destination::MemAddressHi => 0b00_0111_00,
+            Destination::Serial => 0b00_1000_00,
             Destination::Led => 0b00_1001_00,
             Destination::CarrySet => 0b00_1010_00,
             Destination::CarryReset => 0b00_1011_00,
-            Destination::Serial => 0b00_1000_00,
             Destination::ExpansionSelect => 0b00_1100_00,
         }
     }
