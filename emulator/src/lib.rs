@@ -224,11 +224,12 @@ impl Serial {
 
     pub fn write(&mut self, value: Word) {
         self.out_stream.lock().write(&[value]).expect("Stdout error");
+        self.out_stream.flush().unwrap();
     }
 
     pub fn read(&mut self) -> Word {
         let mut buf = [0u8];
-        self.in_stream.lock().read(&mut buf).expect("Stdout error");
+        self.in_stream.lock().read(&mut buf).expect("Stdin error");
         buf[0]
     }
 }
